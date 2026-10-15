@@ -1,0 +1,30 @@
+import Link from "next/link";
+
+export function LogoMark({ size = 28 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--brand)" />
+      <path
+        d="M8 10.5A2.5 2.5 0 0 1 10.5 8h11A2.5 2.5 0 0 1 24 10.5v8a2.5 2.5 0 0 1-2.5 2.5H15l-4.6 3.6c-.5.4-1.4 0-1.4-.7V21h0a2.5 2.5 0 0 1-1-2v-8.5Z"
+        fill="var(--brand-ink)"
+      />
+      <path
+        d="m12.5 14.6 2.4 2.4 4.6-4.6"
+        fill="none"
+        stroke="var(--brand)"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function Logo() {
+  return (
+    <Link href="/" className="inline-flex items-center gap-2 font-semibold tracking-tight text-ink">
+      <LogoMark />
+      <span>Class Feedback</span>
+    </Link>
+  );
+}

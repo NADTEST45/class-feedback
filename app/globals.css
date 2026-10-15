@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --bg: #f4f4f0;
+  --surface: #ffffff;
+  --surface-2: #f6f6f3;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6f6d68;
+  --line: #e1e0d9;
+  --line-strong: #c3c2b7;
+  --brand: #1c5cab;
+  --brand-hover: #184f95;
+  --brand-ink: #ffffff;
+  --brand-soft: #e8f1fd;
+  --good: #006300;
+  --good-soft: #e7f5e7;
+  --warn-soft: #fff4dc;
+  --warn-ink: #7a4f00;
+  --danger: #c0302f;
+  --danger-soft: #fdecec;
+  --danger-ink: #ffffff;
+
+  /* Charts (validated: dataviz reference palette, light surface #ffffff) */
+  --series-1: #2a78d6;
+  --pole-slow: #2a78d6;
+  --pole-fast: #e34948;
+  --neutral-mid: #dcdbd5;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --bg: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #222220;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #9a9890;
+    --line: #2c2c2a;
+    --line-strong: #45443f;
+    --brand: #5598e7;
+    --brand-hover: #6da7ec;
+    --brand-ink: #0b0b0b;
+    --brand-soft: #16263b;
+    --good: #3fbf3f;
+    --good-soft: #142614;
+    --warn-soft: #2e2410;
+    --warn-ink: #f5c460;
+    --danger: #f07373;
+    --danger-soft: #331717;
+    --danger-ink: #0b0b0b;
+
+    --series-1: #3987e5;
+    --pole-slow: #3987e5;
+    --pole-fast: #e66767;
+    --neutral-mid: #4a4945;
+    --grid: #2c2c2a;
+    --axis: #383835;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-ink: var(--warn-ink);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-ink: var(--danger-ink);
+  --color-series-1: var(--series-1);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Visible keyboard focus everywhere, never on mouse click. */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

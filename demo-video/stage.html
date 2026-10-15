@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Class Feedback demo stage</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body {
+    width: 1280px; height: 720px; overflow: hidden;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #e9e7e0; color: #0b0b0b;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before { /* soft studio backdrop */
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(1200px 600px at 50% -10%, #f7f6f2 0%, #e9e7e0 60%, #dedbd2 100%);
+  }
+  .scene { position: absolute; inset: 0; opacity: 0; transition: opacity .55s ease; pointer-events: none; }
+  .scene.on { opacity: 1; pointer-events: auto; }
+
+  /* Title / end / interstitial cards */
+  .card {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    background: linear-gradient(160deg, #0d2747 0%, #133b6e 55%, #1c5cab 100%); color: #fff;
+  }
+  .card h1 { font-size: 64px; letter-spacing: -0.02em; font-weight: 750; margin-top: 22px; }
+  .card .tag { font-size: 28px; margin-top: 14px; color: #d6e6fb; font-weight: 450; }
+  .card .faces { font-size: 44px; margin-top: 30px; letter-spacing: 10px; }
+  .card .reveal { opacity: 0; transform: translateY(14px); transition: opacity .7s ease, transform .7s ease; }
+  .card.on .reveal { opacity: 1; transform: none; }
+  .card.on .d1 { transition-delay: .15s } .card.on .d2 { transition-delay: .45s } .card.on .d3 { transition-delay: .8s }
+  .card.on .d4 { transition-delay: 1.1s } .card.on .d5 { transition-delay: 1.4s } .card.on .d6 { transition-delay: 1.7s }
+  .card.pre .reveal { opacity: 0; transform: translateY(14px); }
+  .interstitial h2 { font-size: 46px; font-weight: 700; letter-spacing: -0.01em; }
+  .interstitial p { font-size: 24px; color: #d6e6fb; margin-top: 14px; }
+  .bullets { margin-top: 34px; display: grid; grid-template-columns: repeat(2, auto); gap: 16px 48px; text-align: left; font-size: 23px; }
+  .bullets div { display: flex; align-items: center; gap: 12px; }
+  .bullets svg { flex: none; }
+  .cta { margin-top: 38px; font-size: 22px; background: #fff; color: #133b6e; padding: 14px 26px; border-radius: 999px; font-weight: 650; }
+
+  /* Browser window chrome */
+  .window {
+    position: absolute; background: #fff; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 30px 60px -20px rgba(20, 20, 15, .35), 0 0 0 1px rgba(11, 11, 11, .08);
+  }
+  .bar { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 14px; background: #f3f2ee; border-bottom: 1px solid #e1e0d9; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .url {
+    margin-left: 14px; flex: 1; max-width: 560px; height: 26px; border-radius: 8px; background: #fff;
+    border: 1px solid #e1e0d9; font-size: 13px; color: #52514e; display: flex; align-items: center; padding: 0 12px; gap: 6px;
+  }
+  .viewport { position: relative; overflow: hidden; background: #f4f4f0; }
+  .viewport iframe { border: 0; transform-origin: 0 0; position: absolute; left: 0; top: 0; background: #f4f4f0; }
+
+  #teacher-win { left: 64px; top: 20px; width: 1152px; }
+  #teacher-win .viewport { width: 1152px; height: 576px; }
+  #teacher-win iframe { width: 1440px; height: 720px; transform: scale(.8); }
+
+  #projector-win { left: 40px; top: 74px; width: 820px; }
+  #projector-win .bar { height: 34px; }
+  #projector-win .viewport { width: 820px; height: 461px; }
+  #projector-win iframe { width: 1366px; height: 768px; transform: scale(.6); background: #fff; }
+  .label { position: absolute; font-size: 14px; font-weight: 600; color: #52514e; letter-spacing: .02em; text-transform: uppercase; }
+
+  .phone {
+    position: absolute; left: 930px; top: 48px; width: 274px; height: 566px; border-radius: 42px; background: #111;
+    padding: 12px; box-shadow: 0 30px 60px -20px rgba(20, 20, 15, .45);
+  }
+  .phone .screen { width: 250px; height: 542px; border-radius: 31px; overflow: hidden; position: relative; background: #f4f4f0; }
+  .phone iframe { border: 0; width: 390px; height: 805px; transform: scale(.641); transform-origin: 0 0; position: absolute; left: 0; top: 26px; }
+  .phone .status { position: absolute; inset: 0 0 auto 0; height: 26px; display: flex; align-items: center; justify-content: space-between; padding: 2px 22px 0 26px; font-size: 11px; font-weight: 650; color: #0b0b0b; }
+  .phone .notch { position: absolute; top: 0; left: 50%; width: 82px; height: 20px; transform: translateX(-50%); background: #111; border-radius: 0 0 13px 13px; z-index: 2; }
+
+  /* Slide preview */
+  #slides-win { left: 120px; top: 34px; width: 1040px; transform: scale(.94); opacity: 0; transition: transform .6s ease, opacity .5s ease; }
+  #slides-win.on { transform: none; opacity: 1; }
+  #slides-win .viewport { height: 540px; display: flex; background: #e9e8e3; }
+  .thumbs { width: 150px; padding: 14px 14px; display: flex; flex-direction: column; gap: 12px; background: #f3f2ee; border-right: 1px solid #e1e0d9; }
+  .thumb { height: 66px; border-radius: 6px; background: #fff; border: 1px solid #dcdbd5; position: relative; }
+  .thumb::after { content: ""; position: absolute; left: 10px; right: 30px; top: 12px; height: 7px; background: #dcdbd5; border-radius: 3px; box-shadow: 0 14px 0 #e9e8e3, 0 26px 0 #e9e8e3; }
+  .thumb.new { border: 2px solid #1c5cab; background-size: cover; background-position: center; }
+  .thumb.new::after { display: none; }
+  .slide-main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .slide-main img { width: 100%; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+
+  /* Captions */
+  #caption {
+    position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(8px);
+    max-width: 1100px; padding: 12px 26px; border-radius: 999px; background: rgba(11, 11, 11, .88); color: #fff;
+    font-size: 23px; font-weight: 550; letter-spacing: -0.005em; white-space: nowrap;
+    opacity: 0; transition: opacity .35s ease, transform .35s ease; z-index: 50;
+  }
+  #caption.on { opacity: 1; transform: translateX(-50%); }
+  #caption b { color: #9ec5f4; font-weight: 650; }
+
+  /* Pointer */
+  #cursor {
+    position: absolute; left: 640px; top: 400px; width: 24px; height: 24px; z-index: 60; pointer-events: none;
+    transition: left .75s cubic-bezier(.45, 0, .2, 1), top .75s cubic-bezier(.45, 0, .2, 1), opacity .3s;
+    opacity: 0;
+  }
+  #cursor.on { opacity: 1; }
+  #cursor .arrow { position: absolute; left: -3px; top: -2px; }
+  #cursor .touch { display: none; position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; background: rgba(11,11,11,.28); border: 2px solid rgba(255,255,255,.9); }
+  #cursor.touch .arrow { display: none; }
+  #cursor.touch .touch { display: block; }
+  .ripple {
+    position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; z-index: 59; pointer-events: none;
+    border: 3px solid #1c5cab; animation: ripple .6s ease-out forwards;
+  }
+  @keyframes ripple { from { transform: scale(.4); opacity: 1; } to { transform: scale(2.6); opacity: 0; } }
+</style>
+</head>
+<body>
+  <!-- 1. Title -->
+  <section id="title" class="scene card on pre">
+    <div class="reveal d1">
+      <svg width="88" height="88" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#fff"/><path d="M8 10.5A2.5 2.5 0 0 1 10.5 8h11A2.5 2.5 0 0 1 24 10.5v8a2.5 2.5 0 0 1-2.5 2.5H15l-4.6 3.6c-.5.4-1.4 0-1.4-.7V21h0a2.5 2.5 0 0 1-1-2v-8.5Z" fill="#1c5cab"/><path d="m12.5 14.6 2.4 2.4 4.6-4.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h1 class="reveal d2">Class Feedback</h1>
+    <p class="tag reveal d3">Find out what didn't land, before your next class.</p>
+    <div class="faces reveal d4">😣😕😐🙂🤩</div>
+  </section>
+
+  <!-- 2. Teacher browser -->
+  <section id="teacher" class="scene">
+    <div id="teacher-win" class="window">
+      <div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span>
+        <div class="url">🔒 <span id="teacher-url">classfeedback.test</span></div></div>
+      <div class="viewport"><iframe id="teacher-frame" title="teacher"></iframe></div>
+    </div>
+  </section>
+
+  <!-- 2b. Slide preview -->
+  <section id="slides" class="scene">
+    <div id="slides-win" class="window">
+      <div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span>
+        <div class="url" style="max-width:340px">Lecture slides</div></div>
+      <div class="viewport">
+        <div class="thumbs"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div id="thumb-new" class="thumb new"></div></div>
+        <div class="slide-main"><img id="slide-img" alt=""></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Time skip -->
+  <section id="later" class="scene card interstitial">
+    <h2 class="reveal d1">A few weeks into the semester…</h2>
+    <p class="reveal d2">The last 2 minutes of a lecture on graph traversal (BFS &amp; DFS)</p>
+  </section>
+
+  <!-- 4. Projector + phone -->
+  <section id="classroom" class="scene">
+    <div class="label" style="left:42px; top:44px">Projector</div>
+    <div id="projector-win" class="window">
+      <div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span>
+        <div class="url">classfeedback.test/present/K7P2QX</div></div>
+      <div class="viewport"><iframe id="projector-frame" title="projector"></iframe></div>
+    </div>
+    <div class="label" style="left:986px; top:20px">A student's phone</div>
+    <div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="status"><span id="clock">11:52</span><svg width="34" height="11" viewBox="0 0 34 11"><rect x="0" y="6" width="3" height="5" rx="1" fill="#0b0b0b"/><rect x="4.5" y="4" width="3" height="7" rx="1" fill="#0b0b0b"/><rect x="9" y="2" width="3" height="9" rx="1" fill="#0b0b0b"/><rect x="18" y="1" width="14" height="9" rx="2.5" fill="none" stroke="#0b0b0b" stroke-opacity=".5"/><rect x="19.5" y="2.5" width="9" height="6" rx="1.2" fill="#0b0b0b"/><rect x="32.5" y="4" width="1.5" height="3" rx=".6" fill="#0b0b0b" fill-opacity=".5"/></svg></div>
+      <iframe id="phone-frame" title="phone"></iframe></div></div>
+  </section>
+
+  <!-- 5. Dashboard -->
+  <section id="dashboard" class="scene">
+    <div id="dash-win" class="window" style="left:64px; top:20px; width:1152px">
+      <div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span>
+        <div class="url">🔒 classfeedback.test/manage</div></div>
+      <div class="viewport" style="width:1152px; height:576px"><iframe id="dash-frame" title="dashboard" style="width:1440px; height:720px; transform:scale(.8)"></iframe></div>
+    </div>
+  </section>
+
+  <!-- 6. End -->
+  <section id="end" class="scene card">
+    <h1 class="reveal d1" style="margin-top:0">Class Feedback</h1>
+    <p class="tag reveal d2">Honest feedback after every class, in under 20 seconds.</p>
+    <div class="bullets">
+      <div class="reveal d3"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a78d6"/><path d="m7 12.5 3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Anonymous: no names, no logins</div>
+      <div class="reveal d3"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a78d6"/><path d="m7 12.5 3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>One QR code all semester</div>
+      <div class="reveal d4"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a78d6"/><path d="m7 12.5 3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Works on any phone, no app needed</div>
+      <div class="reveal d4"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a78d6"/><path d="m7 12.5 3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Results in seconds, export anytime</div>
+    </div>
+    <div class="cta reveal d5">Set up a course in 30 seconds</div>
+  </section>
+
+  <div id="caption"></div>
+  <div id="cursor"><svg class="arrow" width="26" height="30" viewBox="0 0 26 30"><path d="M3 2 L3 24 L9 18.5 L13 27.5 L17 25.8 L13 17 L21 17 Z" fill="#fff" stroke="#0b0b0b" stroke-width="1.8" stroke-linejoin="round"/></svg><div class="touch"></div></div>
+
+<script>
+  const $ = (s) => document.querySelector(s);
+  let captionTimer;
+  window.stage = {
+    show(id) {
+      document.querySelectorAll(".scene").forEach((s) => {
+        s.classList.toggle("on", s.id === id);
+        s.classList.remove("pre");
+      });
+    },
+    caption(html) {
+      const el = $("#caption");
+      clearTimeout(captionTimer);
+      el.classList.remove("on");
+      if (!html) return;
+      captionTimer = setTimeout(() => { el.innerHTML = html; el.classList.add("on"); }, el.textContent ? 300 : 0);
+    },
+    cursor(x, y, mode = "arrow") {
+      const c = $("#cursor");
+      c.classList.add("on");
+      c.classList.toggle("touch", mode === "touch");
+      c.style.left = x + "px";
+      c.style.top = y + "px";
+    },
+    hideCursor() { $("#cursor").classList.remove("on"); },
+    ripple(x, y) {
+      const r = document.createElement("div");
+      r.className = "ripple";
+      r.style.left = x + "px";
+      r.style.top = y + "px";
+      document.body.appendChild(r);
+      setTimeout(() => r.remove(), 700);
+    },
+    showSlide(src) {
+      $("#slide-img").src = src;
+      $("#thumb-new").style.backgroundImage = `url(${src})`;
+      this.show("slides");
+      requestAnimationFrame(() => $("#slides-win").classList.add("on"));
+    },
+  };
+  // The dashboard's "Download slide" posts the generated image here instead of saving a file.
+  const now = new Date();
+  $("#clock").textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2, "0")}`;
+  window.addEventListener("message", (e) => { if (e.data && e.data.slide) window.__slide = e.data.slide; });
+</script>
+</body>
+</html>
